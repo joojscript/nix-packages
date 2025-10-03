@@ -1,0 +1,3 @@
+{
+  portmaster = import ./portmaster.nix;
+}
