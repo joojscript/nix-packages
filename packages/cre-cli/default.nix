@@ -15,7 +15,8 @@ pkgs.stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = srcUrl;
-    sha256 = if stdenv.isx86_64 then "13lbqj1dqyqld2yyvi5yb9a3l8k9665m772hp54inslpmcbi63rc" else "0jj9wx26m6jvf1c1zg9fz95fvxyrr9bm2rca6xd20xlkrks52mmk";
+    # For x86_64 we observed this hash when fetching v1.0.8; keep the arm64 value as-is.
+    sha256 = if stdenv.isx86_64 then "sha256-HN95/rBSmUA/ljo+7yjKzNgZckgXUO1rW9gq/p7fkhc=" else "0jj9wx26m6jvf1c1zg9fz95fvxyrr9bm2rca6xd20xlkrks52mmk";
   };
 
   nativeBuildInputs = [ pkgs.unzip ];
