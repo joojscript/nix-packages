@@ -25,6 +25,7 @@
 , mesa
 , nss
 , nspr
+, atk
 , gcc
 , makeWrapper
 }:
@@ -65,6 +66,7 @@ let
     mesa
     nss
     nspr
+    atk
     gcc.cc.lib
   ];
 in
@@ -97,6 +99,7 @@ stdenv.mkDerivation {
     mesa
     nss
     nspr
+    atk
     gcc.cc.lib
   ];
 
