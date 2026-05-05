@@ -30,7 +30,9 @@ let
   };
 
   # Extract AppImage using appimageTools
-  appimage = appimageTools.extract { inherit src; };
+  appimage = appimageTools.extract { 
+    inherit pname version src;
+  };
 
   # List all required runtime libraries
   runtimeLibs = lib.makeLibraryPath [
