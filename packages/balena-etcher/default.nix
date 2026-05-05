@@ -13,7 +13,7 @@
 , libxcursor
 , libxrandr
 , libxinerama
-, libxi
+, libXi
 , libxext
 , libx11
 , mesa
@@ -41,7 +41,7 @@ appimageTools.wrapType2 {
     libxcursor
     libxrandr
     libxinerama
-    libxi
+    libXi
     libxext
     libx11
     mesa
