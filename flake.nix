@@ -11,7 +11,7 @@
       self,
       nixpkgs,
       flake-utils,
-    }:
+    }@inputs:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -21,7 +21,7 @@
       in
       {
         # Export packages for direct use (uses our own nixpkgs)
-        packages = import ./packages { inherit pkgs; };
+        packages = import ./packages (inputs // { pkgs = pkgs; });
 
         # Development shell
         devShells.default = pkgs.mkShell {

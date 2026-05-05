@@ -7,7 +7,7 @@ let
   version = "1.7.9";
   src = fetchurl {
     url = "https://github.com/balena-io/etcher/releases/download/v${version}/balenaEtcher-${version}-x64.AppImage";
-    sha256 = "1hwqbgr414hpb0xc7ii3qfh12f168wvvgidx7p0zj36ad74scb71"; # Update this for x64 if needed
+    sha256 = "0kq2arf1q7nqr2m6cqhvky6cfbhlzdr7fxiwlgiprsppki89rdxx";
   };
 in
 appimageTools.wrapType2 {
