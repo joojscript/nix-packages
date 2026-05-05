@@ -1,6 +1,23 @@
 # https://github.com/balena-io/etcher/releases/download/v1.7.9/balenaEtcher-1.7.9-x64.AppImage
 
-{ appimageTools, fetchurl, lib, stdenv }:
+{ appimageTools
+, autoPatchelfHook
+, fetchurl
+, lib
+, stdenv
+, glib
+, gtk3
+, libxshmfence
+, libxcb
+, libxkbcommon
+, libxcursor
+, libxrandr
+, libxinerama
+, libxi
+, libxext
+, libx11
+, mesa
+}:
 
 let
   pname = "balena-etcher";
@@ -13,6 +30,23 @@ in
 appimageTools.wrapType2 {
   inherit pname version src;
 
+  nativeBuildInputs = [ autoPatchelfHook ];
+
+  buildInputs = [
+    glib
+    gtk3
+    libxshmfence
+    libxcb
+    libxkbcommon
+    libxcursor
+    libxrandr
+    libxinerama
+    libxi
+    libxext
+    libx11
+    mesa
+  ];
+
   extraInstallCommands = ''
     # Create desktop entry
     mkdir -p $out/share/applications
@@ -20,7 +54,7 @@ appimageTools.wrapType2 {
 [Desktop Entry]
 Type=Application
 Name=Balena Etcher
-Exec=$out/bin/balena-etcher
+Exec=$out/bin/balena-etcher %F
 Icon=balena-etcher
 Comment=Flash OS images to SD cards & USB drives
 Categories=Utility;
@@ -29,6 +63,7 @@ EOF
     # Copy icon if available (AppImage might have it)
     # Assuming the AppImage extracts to have an icon
     if [ -f $out/share/icons/hicolor/512x512/apps/balena-etcher.png ]; then
+      mkdir -p $out/share/pixmaps
       cp $out/share/icons/hicolor/512x512/apps/balena-etcher.png $out/share/pixmaps/
     fi
   '';
