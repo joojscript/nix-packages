@@ -29,6 +29,9 @@ let
     sha256 = "0kq2arf1q7nqr2m6cqhvky6cfbhlzdr7fxiwlgiprsppki89rdxx";
   };
 
+  # Extract AppImage using appimageTools
+  appimage = appimageTools.extract { inherit src; };
+
   # List all required runtime libraries
   runtimeLibs = lib.makeLibraryPath [
     glib
@@ -70,20 +73,13 @@ stdenv.mkDerivation {
     gcc.cc.lib
   ];
 
-  unpackPhase = ''
-    mkdir -p app
-    cp $src app/image.AppImage
-    chmod +x app/image.AppImage
-    cd app
-    ./image.AppImage --appimage-extract
-    cd ..
-  '';
+  unpackPhase = "true";
 
   installPhase = ''
     mkdir -p $out/bin $out/share/{applications,pixmaps,balena-etcher}
 
     # Copy the extracted AppImage content
-    cp -r app/squashfs-root/* $out/share/balena-etcher/ 2>/dev/null || cp -r app/* $out/share/balena-etcher/
+    cp -r ${appimage}/* $out/share/balena-etcher/
 
     # Find and wrap the main executable
     BINARY=$out/share/balena-etcher/balena-etcher-electron.bin
