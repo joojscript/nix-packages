@@ -1,7 +1,19 @@
-{ pkgs }:
+{ pkgs, ... }:
+
+# Export packages using `pkgs.callPackage` so package expressions receive the
+# usual Nixpkgs arguments (lib, stdenv, fetchurl, etc.). This makes writing
+# package files simpler — they can assume the standard Nixpkgs callPackage
+# signature.
+
 {
-  # Directly expose the cre-cli derivation
-  cre-cli = import ./cre-cli { inherit pkgs; };
+  cre-cli = pkgs.callPackage ./cre-cli {};
+
+  obs-face-tracker = pkgs.callPackage ./obs-face-tracker {};
+
   # Safing Portmaster application package
-  portmaster = import ./portmaster { inherit pkgs; };
+  portmaster = pkgs.callPackage ./portmaster {};
+
+  ankama-launcher = pkgs.callPackage ./ankama-launcher {};
+
+  balena-etcher = pkgs.callPackage ./balena-etcher {};
 }
