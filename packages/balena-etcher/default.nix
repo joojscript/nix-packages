@@ -50,7 +50,6 @@ stdenv.mkDerivation {
   inherit pname version src;
 
   nativeBuildInputs = [
-    appimageTools.appimage-exec
     patchelf
     makeWrapper
   ];
@@ -74,7 +73,8 @@ stdenv.mkDerivation {
   unpackPhase = ''
     mkdir -p app
     cd app
-    ${appimageTools.appimage-exec}/bin/appimage-exec $src sh -c 'cp -r * "$1"' -- .
+    chmod +x $src
+    $src --appimage-extract
     cd ..
   '';
 
@@ -82,7 +82,7 @@ stdenv.mkDerivation {
     mkdir -p $out/bin $out/share/{applications,pixmaps,balena-etcher}
 
     # Copy the extracted AppImage content
-    cp -r app/* $out/share/balena-etcher/
+    cp -r app/squashfs-root/* $out/share/balena-etcher/ 2>/dev/null || cp -r app/* $out/share/balena-etcher/
 
     # Find and wrap the main executable
     BINARY=$out/share/balena-etcher/balena-etcher-electron.bin
