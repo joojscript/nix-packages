@@ -72,9 +72,10 @@ stdenv.mkDerivation {
 
   unpackPhase = ''
     mkdir -p app
+    cp $src app/image.AppImage
+    chmod +x app/image.AppImage
     cd app
-    chmod +x $src
-    $src --appimage-extract
+    ./image.AppImage --appimage-extract
     cd ..
   '';
 
