@@ -1,7 +1,6 @@
 # https://github.com/balena-io/etcher/releases/download/v1.7.9/balenaEtcher-1.7.9-x64.AppImage
 
 { appimageTools
-, autoPatchelfHook
 , fetchurl
 , lib
 , stdenv
@@ -17,6 +16,9 @@
 , libXext
 , libX11
 , mesa
+, gcc
+, patchelf
+, makeWrapper
 }:
 
 let
@@ -26,11 +28,32 @@ let
     url = "https://github.com/balena-io/etcher/releases/download/v${version}/balenaEtcher-${version}-x64.AppImage";
     sha256 = "0kq2arf1q7nqr2m6cqhvky6cfbhlzdr7fxiwlgiprsppki89rdxx";
   };
+
+  # List all required runtime libraries
+  runtimeLibs = lib.makeLibraryPath [
+    glib
+    gtk3
+    libxshmfence
+    libxcb
+    libxkbcommon
+    libxcursor
+    libxrandr
+    libXinerama
+    libXi
+    libXext
+    libX11
+    mesa
+    gcc.cc.lib
+  ];
 in
-appimageTools.wrapType2 {
+stdenv.mkDerivation {
   inherit pname version src;
 
-  nativeBuildInputs = [ autoPatchelfHook ];
+  nativeBuildInputs = [
+    appimageTools.appimage-exec
+    patchelf
+    makeWrapper
+  ];
 
   buildInputs = [
     glib
@@ -45,11 +68,37 @@ appimageTools.wrapType2 {
     libXext
     libX11
     mesa
+    gcc.cc.lib
   ];
 
-  extraInstallCommands = ''
+  unpackPhase = ''
+    mkdir -p app
+    cd app
+    ${appimageTools.appimage-exec}/bin/appimage-exec $src sh -c 'cp -r * "$1"' -- .
+    cd ..
+  '';
+
+  installPhase = ''
+    mkdir -p $out/bin $out/share/{applications,pixmaps,balena-etcher}
+
+    # Copy the extracted AppImage content
+    cp -r app/* $out/share/balena-etcher/
+
+    # Find and wrap the main executable
+    BINARY=$out/share/balena-etcher/balena-etcher-electron.bin
+    
+    if [ -f "$BINARY" ]; then
+      # Use patchelf to set interpreter and RPATH
+      patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
+               --set-rpath "${runtimeLibs}:$out/share/balena-etcher" \
+               "$BINARY" || true
+      
+      # Create wrapper script
+      makeWrapper "$BINARY" $out/bin/balena-etcher \
+        --set LD_LIBRARY_PATH "${runtimeLibs}:$out/share/balena-etcher"
+    fi
+
     # Create desktop entry
-    mkdir -p $out/share/applications
     cat > $out/share/applications/balena-etcher.desktop << EOF
 [Desktop Entry]
 Type=Application
@@ -60,11 +109,9 @@ Comment=Flash OS images to SD cards & USB drives
 Categories=Utility;
 EOF
 
-    # Copy icon if available (AppImage might have it)
-    # Assuming the AppImage extracts to have an icon
-    if [ -f $out/share/icons/hicolor/512x512/apps/balena-etcher.png ]; then
-      mkdir -p $out/share/pixmaps
-      cp $out/share/icons/hicolor/512x512/apps/balena-etcher.png $out/share/pixmaps/
+    # Try to copy icon
+    if [ -f $out/share/balena-etcher/balena-etcher.png ]; then
+      cp $out/share/balena-etcher/balena-etcher.png $out/share/pixmaps/
     fi
   '';
 
