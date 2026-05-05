@@ -24,6 +24,7 @@
 , libXinerama
 , mesa
 , nss
+, nspr
 , gcc
 , makeWrapper
 }:
@@ -63,6 +64,7 @@ let
     libXinerama
     mesa
     nss
+    nspr
     gcc.cc.lib
   ];
 in
@@ -94,6 +96,7 @@ stdenv.mkDerivation {
     libXinerama
     mesa
     nss
+    nspr
     gcc.cc.lib
   ];
 
