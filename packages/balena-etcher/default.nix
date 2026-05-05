@@ -12,10 +12,10 @@
 , libxkbcommon
 , libxcursor
 , libxrandr
-, libxinerama
+, libXinerama
 , libXi
-, libxext
-, libx11
+, libXext
+, libX11
 , mesa
 }:
 
@@ -40,10 +40,10 @@ appimageTools.wrapType2 {
     libxkbcommon
     libxcursor
     libxrandr
-    libxinerama
+    libXinerama
     libXi
-    libxext
-    libx11
+    libXext
+    libX11
     mesa
   ];
 
