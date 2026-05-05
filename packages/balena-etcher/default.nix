@@ -4,20 +4,27 @@
 , fetchurl
 , lib
 , stdenv
+, dbus
+, dbus-glib
+, gdk-pixbuf
 , glib
+, gtk2
 , gtk3
-, libxshmfence
+, libappindicator
+, alsa-lib
+, libdrm
 , libxcb
-, libxkbcommon
 , libxcursor
+, libxkbcommon
 , libxrandr
-, libXinerama
-, libXi
-, libXext
+, libxshmfence
 , libX11
+, libXext
+, libXi
+, libXinerama
 , mesa
+, nss
 , gcc
-, patchelf
 , makeWrapper
 }:
 
@@ -36,18 +43,26 @@ let
 
   # List all required runtime libraries
   runtimeLibs = lib.makeLibraryPath [
+    dbus
+    dbus-glib
+    gdk-pixbuf
     glib
+    gtk2
     gtk3
-    libxshmfence
+    libappindicator
+    alsa-lib
+    libdrm
     libxcb
-    libxkbcommon
     libxcursor
+    libxkbcommon
     libxrandr
-    libXinerama
-    libXi
-    libXext
+    libxshmfence
     libX11
+    libXext
+    libXi
+    libXinerama
     mesa
+    nss
     gcc.cc.lib
   ];
 in
@@ -55,23 +70,30 @@ stdenv.mkDerivation {
   inherit pname version src;
 
   nativeBuildInputs = [
-    patchelf
     makeWrapper
   ];
 
   buildInputs = [
+    dbus
+    dbus-glib
+    gdk-pixbuf
     glib
+    gtk2
     gtk3
-    libxshmfence
+    libappindicator
+    alsa-lib
+    libdrm
     libxcb
-    libxkbcommon
     libxcursor
+    libxkbcommon
     libxrandr
-    libXinerama
-    libXi
-    libXext
+    libxshmfence
     libX11
+    libXext
+    libXi
+    libXinerama
     mesa
+    nss
     gcc.cc.lib
   ];
 
@@ -87,14 +109,9 @@ stdenv.mkDerivation {
     BINARY=$out/share/balena-etcher/balena-etcher-electron.bin
     
     if [ -f "$BINARY" ]; then
-      # Use patchelf to set interpreter and RPATH
-      patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
-               --set-rpath "${runtimeLibs}:$out/share/balena-etcher" \
-               "$BINARY" || true
-      
-      # Create wrapper script
+      # Create wrapper script that sets up library paths
       makeWrapper "$BINARY" $out/bin/balena-etcher \
-        --set LD_LIBRARY_PATH "${runtimeLibs}:$out/share/balena-etcher"
+        --set LD_LIBRARY_PATH "${runtimeLibs}:$out/share/balena-etcher/lib:$out/share/balena-etcher/usr/lib"
     fi
 
     # Create desktop entry
