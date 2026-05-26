@@ -34,8 +34,8 @@ stdenv.mkDerivation rec {
       pkgs.alsa-lib
       pkgs.mesa
       pkgs.libxkbcommon
-  pkgs.libappindicator-gtk3
-      pkgs.webkitgtk_4_1
+      pkgs.libappindicator-gtk3
+      pkgs.webkitgtk_6
       pkgs.libsoup_3
     ]
     ++ (with pkgs.xorg; [ libX11 libXcomposite libXdamage libXext libXfixes libXrandr libxcb ]);
