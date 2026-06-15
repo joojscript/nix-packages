@@ -10,10 +10,11 @@
 
   obs-face-tracker = pkgs.callPackage ./obs-face-tracker {};
 
-  # Safing Portmaster application package
   portmaster = pkgs.callPackage ./portmaster {};
 
   ankama-launcher = pkgs.callPackage ./ankama-launcher {};
 
   balena-etcher = pkgs.callPackage ./balena-etcher {};
+
+  parsec = pkgs.callPackage ./parsec {};
 }
