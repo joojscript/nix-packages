@@ -1,88 +1,107 @@
-{ pkgs, lib, ... }:
+{ stdenvNoCC
+, stdenv
+, lib
+, dpkg
+, autoPatchelfHook
+, makeWrapper
+, fetchurl
+, alsa-lib
+, openssl
+, udev
+, libglvnd
+, libX11
+, libXcursor
+, libXi
+, libXrandr
+, libXfixes
+, libpulseaudio
+, libva
+, ffmpeg_7
+, libpng
+, libjpeg8
+, curl
+, vulkan-loader
+, zenity
+}:
 
 let
-  version = "150-97"; # Update when Parsec releases new versions
+  pname = "parsec";
+  version = "150-97c";
+in
+stdenvNoCC.mkDerivation {
+  inherit pname version;
 
-  parsecAppImage = pkgs.fetchurl {
+  src = fetchurl {
     url = "https://builds.parsec.app/package/parsec-linux.deb";
     sha256 = "sha256-8Wkbo6l1NGBPX2QMJszq+u9nLM96tu7WYRTQq6/CzM8=";
   };
 
-  parsec = pkgs.stdenv.mkDerivation rec {
-    pname = "parsec";
-    inherit version;
+  nativeBuildInputs = [ dpkg autoPatchelfHook makeWrapper ];
 
-    src = parsecAppImage;
+  buildInputs = [
+    stdenv.cc.cc
+    libglvnd
+    libX11
+  ];
 
-    nativeBuildInputs = [ pkgs.dpkg pkgs.cpio ];
+  runtimeDependenciesPath = lib.makeLibraryPath [
+    stdenv.cc.cc
+    libglvnd
+    openssl
+    udev
+    alsa-lib
+    libpulseaudio
+    libva
+    ffmpeg_7
+    libpng
+    libjpeg8
+    curl
+    libX11
+    libXcursor
+    libXi
+    libXrandr
+    libXfixes
+    vulkan-loader
+  ];
 
-    buildPhase = ''
-      mkdir -p $out/bin
-      mkdir work
-      cd work
+  dontAutoPatchelf = true;
+  dontBuild = true;
 
-      dpkg-deb -x ${parsecAppImage} .
+  installPhase = ''
+    runHook preInstall
 
-      APPIMAGE=$(find . -name "*.AppImage" | head -n1 || true)
-      if [ -n "$APPIMAGE" ]; then
-        cp "$APPIMAGE" $out/Parsec.AppImage
-        chmod +x $out/Parsec.AppImage
-        cat > $out/bin/parsec <<'EOF'
-#!/bin/sh
-HERE=$(dirname "$0")
-exec "$HERE/../Parsec.AppImage" "$@"
-EOF
-        chmod +x $out/bin/parsec
-      else
-        # Copy any executables from usr/bin (many .deb packages place bins there)
-        if [ -d usr/bin ]; then
-          for f in usr/bin/*; do
-            if [ -f "$f" ] && [ -x "$f" ]; then
-              cp "$f" $out/bin/$(basename "$f")
-            fi
-          done
+    mkdir $out
+    dpkg-deb -x $src $out
+    mv $out/usr/* $out
+    rm -rf $out/usr
 
-          # Provide a convenient `parsec` wrapper that runs `parsecd` if present
-          if [ -x "$out/bin/parsecd" ]; then
-            cat > $out/bin/parsec <<'EOF'
-#!/bin/sh
-HERE=$(dirname "$0")
-exec "$HERE/parsecd" "$@"
-EOF
-            chmod +x $out/bin/parsec
-          else
-            # If no parsecd, pick the first executable as a fallback
-            FIRST=$(ls $out/bin | head -n1 || true)
-            if [ -n "$FIRST" ]; then
-              cat > $out/bin/parsec <<'EOF'
-#!/bin/sh
-HERE=$(dirname "$0")
-exec "$HERE/$FIRST" "$@"
-EOF
-              chmod +x $out/bin/parsec
-            else
-              echo "no executables found inside deb" >&2
-              exit 1
-            fi
-          fi
-        else
-          echo "no usr/bin in deb" >&2
-          exit 1
+    autoPatchelf -- $out/bin
+
+    wrapProgram $out/bin/parsecd \
+      --prefix LD_LIBRARY_PATH : "$runtimeDependenciesPath" \
+      --prefix PATH : "${lib.makeBinPath [ zenity ]}" \
+      --run '
+        if [[ ! -e "$HOME/.parsec/appdata.json" ]]; then
+          mkdir -p "$HOME/.parsec"
+          cp --no-preserve=mode,ownership,timestamps '"$out/share/parsec/skel/*"' "$HOME/.parsec/"
         fi
-      fi
-    '';
+      '
 
-    installPhase = ''
-      # everything already placed into $out during buildPhase
-      true
-    '';
+    ln -s $out/bin/parsecd $out/bin/parsec
 
-    meta = with pkgs.lib; {
-      description = "Parsec remote desktop";
-      license = licenses.unfree;
-      platforms = platforms.linux;
-    };
+    substituteInPlace $out/share/applications/parsecd.desktop \
+      --replace "/usr/bin/parsecd" "parsecd" \
+      --replace "/usr/share/icons" "$out/share/icons"
+
+    runHook postInstall
+  '';
+
+  meta = with lib; {
+    description = "Remote desktop streaming service client";
+    homepage = "https://parsec.app/";
+    changelog = "https://parsec.app/changelog";
+    license = licenses.unfree;
+    platforms = [ "x86_64-linux" ];
+    mainProgram = "parsecd";
   };
-
-in
-  parsec
+}
